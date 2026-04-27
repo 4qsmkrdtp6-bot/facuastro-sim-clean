@@ -1,31 +1,41 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>FacuAstro Simulation</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FacuAstro Simulation</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
-<canvas id="canvas"></canvas>
 
-<div class="ui">
-  <button onclick="toggleSim()">Start / Pause</button>
-  <div id="energy"></div>
-  <div id="momentum"></div>
+  <!-- CANVAS PRINCIPAL (Three.js) -->
+  <canvas id="canvas"></canvas>
 
-  <div class="panel">
-    <h3>Simulation Info</h3>
-    <p>Model: Newtonian Gravity</p>
-    <p>Integrator: RK4</p>
+  <!-- UI SUPERPUESTA -->
+  <div class="ui">
+
+    <button onclick="toggleSim()">Start / Pause</button>
+
+    <div id="energy"></div>
+    <div id="momentum"></div>
+
+    <div class="panel">
+      <h3>Simulation Info</h3>
+      <p>Model: Newtonian Gravity</p>
+      <p>Integrator: RK4</p>
+    </div>
+
+    <div class="contact">
+      <h3>Contacto</h3>
+      <p>Facundo Castro</p>
+      <p>Email: tuemail@email.com</p>
+    </div>
+
   </div>
 
-  <div class="contact">
-    <h3>Contacto</h3>
-    <p>Facundo Castro</p>
-    <p>Email: tuemail@email.com</p>
-  </div>
-</div>
+  <!-- JS PRINCIPAL -->
+  <script type="module" src="main.js"></script>
 
-<script type="module" src="main.js"></script>
 </body>
 </html>
