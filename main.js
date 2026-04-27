@@ -1,62 +1,148 @@
-import { System } from "./src/models/system.js";
-import { solarSystem } from "./src/data/solarSystem.js";
-import { rk4Step } from "./src/physics/rk4.js";
-import { computeEnergy } from "./src/physics/energy.js";
-import { angularMomentum } from "./src/physics/angularMomentum.js";
+import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+// ----------------------
+// SETUP BÁSICO
+// ----------------------
+const canvas = document.querySelector("#canvas");
 
-canvas.width = innerWidth;
-canvas.height = innerHeight;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x000000);
 
-const system = new System(JSON.parse(JSON.stringify(solarSystem)));
-system.centerOfMassCorrection();
+// Cámara tipo NASA
+const camera = new THREE.PerspectiveCamera(
+  60,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  1000
+);
+camera.position.set(0, 40, 80);
 
-let running = true;
-let dt = 0.002;
-let trails = [];
+// Renderer
+const renderer = new THREE.WebGLRenderer({
+  canvas,
+  antialias: true
+});
 
-function draw() {
-  ctx.fillStyle = "black";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
 
-  system.bodies.forEach((b,i)=>{
-    const x = canvas.width/2 + b.x*150;
-    const y = canvas.height/2 + b.y*150;
+// Controles tipo Space Engine / NASA Eyes
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
 
-    trails[i] = trails[i] || [];
-    trails[i].push({x,y});
-    if(trails[i].length>200) trails[i].shift();
+// Luz
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const light = new THREE.PointLight(0xffffff, 1.2);
+scene.add(light);
 
-    ctx.beginPath();
-    trails[i].forEach((p,j)=>{
-      if(j===0) ctx.moveTo(p.x,p.y);
-      else ctx.lineTo(p.x,p.y);
-    });
-    ctx.strokeStyle="white";
-    ctx.stroke();
+// ----------------------
+// SISTEMA FÍSICO SIMPLE
+// ----------------------
+const bodies = [];
 
-    ctx.beginPath();
-    ctx.arc(x,y,b.name==="Sun"?6:3,0,Math.PI*2);
-    ctx.fillStyle="white";
-    ctx.fill();
+function createBody({ mass, position, velocity, color, size }) {
+  const mesh = new THREE.Mesh(
+    new THREE.SphereGeometry(size, 32, 32),
+    new THREE.MeshStandardMaterial({ color })
+  );
 
-    ctx.fillText(b.name, x+5, y+5);
-  });
+  mesh.position.copy(position);
+  scene.add(mesh);
 
-  const e = computeEnergy(system.bodies);
-  const L = angularMomentum(system.bodies);
+  const body = {
+    mesh,
+    mass,
+    velocity
+  };
 
-  document.getElementById("energy").innerText = `Energy: ${e.total.toFixed(5)}`;
-  document.getElementById("momentum").innerText = `Angular Momentum: ${L.toFixed(5)}`;
+  bodies.push(body);
 }
 
-function loop(){
-  if(running) rk4Step(system,dt);
-  draw();
-  requestAnimationFrame(loop);
-}
-loop();
+// Sol
+createBody({
+  mass: 10000,
+  position: new THREE.Vector3(0, 0, 0),
+  velocity: new THREE.Vector3(0, 0, 0),
+  color: 0xffff00,
+  size: 6
+});
 
-window.toggleSim = ()=> running=!running;
+// Planeta 1
+createBody({
+  mass: 10,
+  position: new THREE.Vector3(30, 0, 0),
+  velocity: new THREE.Vector3(0, 0, 0.8),
+  color: 0x00ffcc,
+  size: 2
+});
+
+// Planeta 2
+createBody({
+  mass: 20,
+  position: new THREE.Vector3(-50, 0, 0),
+  velocity: new THREE.Vector3(0, 0, -0.6),
+  color: 0x3399ff,
+  size: 3
+});
+
+// ----------------------
+// GRAVEDAD (SIMPLIFICADA)
+// ----------------------
+const G = 0.05;
+
+function updatePhysics() {
+  for (let i = 0; i < bodies.length; i++) {
+    const bi = bodies[i];
+
+    let force = new THREE.Vector3(0, 0, 0);
+
+    for (let j = 0; j < bodies.length; j++) {
+      if (i === j) continue;
+
+      const bj = bodies[j];
+
+      const dir = new THREE.Vector3()
+        .subVectors(bj.mesh.position, bi.mesh.position);
+
+      const dist = Math.max(dir.length(), 2);
+
+      const strength = (G * bi.mass * bj.mass) / (dist * dist);
+
+      dir.normalize().multiplyScalar(strength);
+
+      force.add(dir);
+    }
+
+    // aceleración
+    const acceleration = force.divideScalar(bi.mass);
+
+    bi.velocity.add(acceleration);
+    bi.mesh.position.add(bi.velocity);
+  }
+}
+
+// ----------------------
+// LOOP PRINCIPAL
+// ----------------------
+function animate() {
+  requestAnimationFrame(animate);
+
+  updatePhysics();
+
+  controls.update();
+
+  renderer.render(scene, camera);
+}
+
+animate();
+
+// ----------------------
+// RESIZE FIX
+// ----------------------
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
