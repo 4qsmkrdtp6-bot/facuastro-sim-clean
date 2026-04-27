@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>FacuAstro Simulation</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<div class="ui">
+  <button onclick="toggleSim()">Start / Pause</button>
+  <div id="energy"></div>
+  <div id="momentum"></div>
+
+  <div class="panel">
+    <h3>Simulation Info</h3>
+    <p>Model: Newtonian Gravity</p>
+    <p>Integrator: RK4</p>
+  </div>
+
+  <div class="contact">
+    <h3>Contacto</h3>
+    <p>Facundo Castro</p>
+    <p>Email: tuemail@email.com</p>
+  </div>
+</div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
