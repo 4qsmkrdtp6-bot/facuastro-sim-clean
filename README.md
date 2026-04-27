@@ -62,4 +62,4 @@ Email: astronomyexplorer646@gmail.com
 
 ## 📄 License
 
-MIT Lice
+MIT License
